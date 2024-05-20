@@ -1,46 +1,55 @@
 #!/usr/bin/env python3
-"""Console module for the AirBnB clone project."""
+"""
+This module contains the entry point for the command interpreter.
+"""
 
 import cmd
-from models.base_model import BaseModel
-from models import storage
-import re
-import json
 
 class HBNBCommand(cmd.Cmd):
     """
-    Command interpreter class for the AirBnB clone project.
+    Command interpreter class that defines commands to manage the AirBnB clone project.
     """
-    prompt = "(hbnb) "
-
-    def do_help(self, arg):
-        """ Help command to get help on <topic> """
-        return super().do_help(arg)
+    prompt = '(hbnb) '
 
     def do_quit(self, arg):
         """
         Quit command to exit the program.
-        
-        Args:
-            arg: Additional arguments (not used).
         """
         return True
 
     def do_EOF(self, arg):
         """
         EOF command to exit the program.
-        
-        Args:
-            arg: Additional arguments (not used).
         """
         print()
         return True
 
     def emptyline(self):
         """
-        Overrides the default behavior of repeating the last command when an empty line is entered.
+        Overrides the default behavior of repeating the last command on an empty line.
+        Does nothing on an empty line + ENTER.
         """
         pass
+
+    def do_help(self, arg):
+        """
+        Provides help information for commands.
+        """
+        if arg:
+            try:
+                func = getattr(self, 'help_' + arg)
+            except AttributeError:
+                try:
+                    doc = getattr(self, 'do_' + arg).__doc__
+                    if doc:
+                        self.stdout.write("%s\n" % str(doc))
+                        return
+                except AttributeError:
+                    self.stdout.write("%s\n" % str(self.nohelp % (arg,)))
+                    return
+            func()
+        else:
+            cmd.Cmd.do_help(self, arg)
 
 if __name__ == '__main__':
     HBNBCommand().cmdloop()
