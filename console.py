@@ -2,12 +2,20 @@
 """Console module for the AirBnB clone project."""
 
 import cmd
+from models.base_model import BaseModel
+from models import storage
+import re
+import json
 
 class HBNBCommand(cmd.Cmd):
     """
     Command interpreter class for the AirBnB clone project.
     """
     prompt = "(hbnb) "
+
+    def do_help(self, arg):
+        """ Help command to get help on <topic> """
+        return super().do_help(arg)
 
     def do_quit(self, arg):
         """
