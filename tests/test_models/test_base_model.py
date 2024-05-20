@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Unittests for BaseModel class.
+Unittests for the BaseModel class.
 """
 
 import unittest
 from datetime import datetime
-from time import sleep
 from models.base_model import BaseModel
+from time import sleep
 
 class TestBaseModel(unittest.TestCase):
     """
@@ -16,18 +16,21 @@ class TestBaseModel(unittest.TestCase):
     def setUp(self):
         """
         Sets up the test environment before each test.
+        Creates a new instance of BaseModel.
         """
         self.model = BaseModel()
 
     def tearDown(self):
         """
         Cleans up the test environment after each test.
+        Deletes the BaseModel instance.
         """
         del self.model
 
     def test_instance_creation(self):
         """
         Test the creation of a BaseModel instance.
+        Ensures the instance is created with correct attributes.
         """
         self.assertIsInstance(self.model, BaseModel)
         self.assertIsInstance(self.model.id, str)
@@ -43,7 +46,7 @@ class TestBaseModel(unittest.TestCase):
 
     def test_save_method(self):
         """
-        Test the save method updates `updated_at` attribute.
+        Test the save method updates the `updated_at` attribute.
         """
         old_updated_at = self.model.updated_at
         sleep(1)
@@ -62,6 +65,7 @@ class TestBaseModel(unittest.TestCase):
     def test_to_dict_method(self):
         """
         Test the to_dict method returns a dictionary with correct values.
+        Ensures the dictionary includes the `__class__` key and ISO formatted datetimes.
         """
         model_dict = self.model.to_dict()
         self.assertIsInstance(model_dict, dict)
@@ -73,6 +77,23 @@ class TestBaseModel(unittest.TestCase):
         self.assertIn("id", model_dict)
         self.assertIn("created_at", model_dict)
         self.assertIn("updated_at", model_dict)
+
+    def test_kwargs_initialization(self):
+        """
+        Test initializing BaseModel with keyword arguments.
+        Ensures attributes are set correctly from kwargs.
+        """
+        data = {
+            "id": "123",
+            "created_at": "2023-01-01T00:00:00.000000",
+            "updated_at": "2023-01-01T00:00:00.000000",
+            "name": "Test"
+        }
+        model = BaseModel(**data)
+        self.assertEqual(model.id, "123")
+        self.assertEqual(model.created_at, datetime.fromisoformat("2023-01-01T00:00:00.000000"))
+        self.assertEqual(model.updated_at, datetime.fromisoformat("2023-01-01T00:00:00.000000"))
+        self.assertEqual(model.name, "Test")
 
 if __name__ == "__main__":
     unittest.main()
