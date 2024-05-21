@@ -3,6 +3,7 @@
 
 import uuid
 from datetime import datetime
+from models import storage
 
 class BaseModel:
     """Defines all common attributes/methods for other classes."""
@@ -37,7 +38,7 @@ class BaseModel:
         Returns:
             str: String representation in the format [<class name>] (<self.id>) <self.__dict__>.
         """
-        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
+        return f"[{type(self).__name__}] ({self.id}) {self.__dict__}"
 
     def save(self):
         """

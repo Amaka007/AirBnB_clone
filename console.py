@@ -16,7 +16,6 @@ from models.amenity import Amenity
 from models.place import Place
 from models.review import Review
 
-
 class HBNBCommand(cmd.Cmd):
     """
     Command interpreter class that defines commands to manage the AirBnB clone project.
@@ -54,20 +53,16 @@ class HBNBCommand(cmd.Cmd):
         pass
 
     def do_create(self, arg):
-        """
-        Creates a new instance of BaseModel, saves it (to the JSON file), and prints the id.
-        Usage: create <class name>
-        """
-        if not arg:
-            print("** class name missing **")
-            return
-        if arg != "BaseModel":
-            print("** class doesn't exist **")
-            return
-
-        new_instance = BaseModel()
-        new_instance.save()
-        print(new_instance.id)
+        """Create a new instance of BaseModel, save it, and print the id"""
+        slit_agrs = arg.split()
+        if len(slit_agrs) == 0:
+            print('** class name missing **')
+        elif slit_agrs[0] not in self.classes:
+            print('** class doesn\'t exist **')
+        else:
+            new_instance = self.classes[slit_agrs[0]]()
+            new_instance.save()
+            print(new_instance.id)
 
     def do_show(self, arg):
         """
@@ -78,7 +73,7 @@ class HBNBCommand(cmd.Cmd):
         if not args:
             print("** class name missing **")
             return
-        if args[0] != "BaseModel":
+        if args[0] not in storage.classes():
             print("** class doesn't exist **")
             return
         if len(args) < 2:
@@ -100,7 +95,7 @@ class HBNBCommand(cmd.Cmd):
         if not args:
             print("** class name missing **")
             return
-        if args[0] != "BaseModel":
+        if args[0] not in storage.classes():
             print("** class doesn't exist **")
             return
         if len(args) < 2:
@@ -108,31 +103,29 @@ class HBNBCommand(cmd.Cmd):
             return
 
         key = f"{args[0]}.{args[1]}"
-        if key in storage.all():
-            del storage.all()[key]
+        objs = storage.all()
+        if key in objs:
+            del objs[key]
             storage.save()
         else:
             print("** no instance found **")
 
     def do_all(self, arg):
         """
-        Prints all string representation of all instances based or not on the class name.
+        Prints all string representation of all instances based on the class name.
         Usage: all or all <class name>
         """
-        if arg and arg != "BaseModel":
-            print("** class doesn't exist **")
-            return
-
-        objects = storage.all()
-        obj_list = []
-        if arg:
-            for key, obj in objects.items():
-                if key.startswith(arg):
-                    obj_list.append(str(obj))
+        args = arg.split()
+        objs = storage.all()
+        if len(args) == 0:
+            for obj in objs.values():
+                print(obj)
+        elif args[0] not in self.classes:
+            print('** class doesn\'t exist **')
         else:
-            for obj in objects.values():
-                obj_list.append(str(obj))
-        print(obj_list)
+            for obj in objs.values():
+                if obj.__class__.__name__ == args[0]:
+                    print(obj)
 
     def do_update(self, arg):
         """Update an instance based on the class name and id"""
@@ -182,15 +175,19 @@ class HBNBCommand(cmd.Cmd):
         setattr(obj, attr_name, attr_value)
         obj.save()
 
-    def do_count(self, arg):
-        """Retrieve the number of instances of a given class"""
-
-        l_arg = parse(arg)
-        i = 0
-        for obj in storage.all().values():
-            if l_arg[0] == obj.__class__.__name__:
-                i += 1
-        print(i)
+    def do_count(self, line):
+        """Counts the instances of a class.
+        """
+        words = line.split(' ')
+        if not words[0]:
+            print("** class name missing **")
+        elif words[0] not in storage.classes():
+            print("** class doesn't exist **")
+        else:
+            matches = [
+                k for k in storage.all() if k.startswith(
+                    words[0] + '.')]
+            print(len(matches))
 
     def default(self, arg):
         """Override default method to handle custom commands"""

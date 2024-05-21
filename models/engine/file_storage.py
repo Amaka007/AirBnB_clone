@@ -2,7 +2,6 @@
 """Module for the file storage model class to manage the JSON file storage and deserialization."""
 
 import json
-from models.base_model import BaseModel
 import os
 
 class FileStorage:
@@ -39,11 +38,8 @@ class FileStorage:
         with open(FileStorage.__file_path, 'w') as file:
             json.dump(obj_dict, file)
 
-    def reload(self):
-        """
-        Deserializes the JSON file to __objects, if the JSON file (__file_path) exists.
-        If the file doesn’t exist, no exception is raised.
-        """
+    def classes(self):
+        """Returns a dictionary of valid classes and their references"""
         from models.base_model import BaseModel
         from models.user import User
         from models.state import State
@@ -52,23 +48,42 @@ class FileStorage:
         from models.place import Place
         from models.review import Review
 
-        classes = {
-            "BaseModel": BaseModel,
-            "User": User,
-            "State": State,
-            "City": City,
-            "Amenity": Amenity,
-            "Place": Place,
-            "Review": Review
-        }
-
+        classes = {"BaseModel": BaseModel,
+                   "User": User,
+                   "State": State,
+                   "City": City,
+                   "Amenity": Amenity,
+                   "Place": Place,
+                   "Review": Review}
+        return classes
+    def reload(self):
+        """Deserializes the JSON file to __objects (if the file exists)"""
+        if not os.path.isfile(FileStorage.__file_path):
+            return
         try:
-            with open(FileStorage.__file_path, 'r') as file:
-                obj_dict = json.load(file)
+            with open(FileStorage.__file_path, 'r') as f:
+                obj_dict = json.load(f)
+                from models.base_model import BaseModel
+                from models.user import User
+                from models.state import State
+                from models.city import City
+                from models.amenity import Amenity
+                from models.place import Place
+                from models.review import Review
+                classes = {
+                    'BaseModel': BaseModel,
+                    'User': User,
+                    'State': State,
+                    'City': City,
+                    'Amenity': Amenity,
+                    'Place': Place,
+                    'Review': Review
+                }
                 for key, value in obj_dict.items():
-                    class_name = value["__class__"]
-                    if class_name == "BaseModel":
-                        FileStorage.__objects[key] = BaseModel(**value)
+                    class_name, obj_id = key.split('.')
+                    cls = classes[class_name]
+                    new_obj = cls(**value)
+                    self.new(new_obj)
         except FileNotFoundError:
             pass
 
