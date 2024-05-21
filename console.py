@@ -1,18 +1,37 @@
 #!/usr/bin/env python3
 """
-This module contains the entry point for the command interpreter.
+Command interpreter class for the AirBnB clone project
 """
 
 import cmd
-import sys
-from models.base_model import BaseModel
+import re
+import json
+from shlex import split
 from models import storage
+from models.base_model import BaseModel
+from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
+
 
 class HBNBCommand(cmd.Cmd):
     """
     Command interpreter class that defines commands to manage the AirBnB clone project.
     """
     prompt = '(hbnb) '
+
+    classes = {
+        'BaseModel': BaseModel,
+        'User': User,
+        'State': State,
+        'City': City,
+        'Amenity': Amenity,
+        'Place': Place,
+        'Review': Review
+    }
 
     def do_quit(self, arg):
         """
@@ -116,41 +135,95 @@ class HBNBCommand(cmd.Cmd):
         print(obj_list)
 
     def do_update(self, arg):
-        """
-        Updates an instance based on the class name and id by adding or updating attribute.
-        Usage: update <class name> <id> <attribute name> "<attribute value>"
-        """
-        args = arg.split()
-        if not args:
+        """Update an instance based on the class name and id"""
+        args = arg.split(" ", 2)
+        if not args[0]:
             print("** class name missing **")
             return
-        if args[0] != "BaseModel":
+        if args[0] not in self.classes:
             print("** class doesn't exist **")
             return
         if len(args) < 2:
             print("** instance id missing **")
             return
-        if len(args) < 3:
-            print("** attribute name missing **")
-            return
-        if len(args) < 4:
-            print("** value missing **")
-            return
-
-        class_name, id, attribute_name, attribute_value = args[0], args[1], args[2], args[3].strip('"')
-        key = f"{class_name}.{id}"
+        key = "{}.{}".format(args[0], args[1])
         if key not in storage.all():
             print("** no instance found **")
             return
+        if len(args) == 2:
+            print("** attribute name missing **")
+            return
 
+        # Check if the third argument is a dictionary
+        if args[2].startswith("{") and args[2].endswith("}"):
+            try:
+                attr_dict = json.loads(args[2].replace("'", "\""))
+            except json.JSONDecodeError:
+                print("** invalid dictionary **")
+                return
+            for attr_name, attr_value in attr_dict.items():
+                self.update_instance(key, attr_name, attr_value)
+        else:
+            attr_parts = args[2].split()
+            if len(attr_parts) < 2:
+                print("** value missing **")
+                return
+            attr_name = attr_parts[0]
+            attr_value = attr_parts[1]
+            self.update_instance(key, attr_name, attr_value)
+
+    def update_instance(self, key, attr_name, attr_value):
+        """Update instance helper to handle type conversion"""
         obj = storage.all()[key]
-        try:
-            cast_type = type(getattr(obj, attribute_name))
-            attribute_value = cast_type(attribute_value)
-        except AttributeError:
-            pass
-        setattr(obj, attribute_name, attribute_value)
+        if attr_value.isdigit():
+            attr_value = int(attr_value)
+        elif attr_value.replace('.', '', 1).isdigit():
+            attr_value = float(attr_value)
+        setattr(obj, attr_name, attr_value)
         obj.save()
+
+    def do_count(self, arg):
+        """Retrieve the number of instances of a given class"""
+
+        l_arg = parse(arg)
+        i = 0
+        for obj in storage.all().values():
+            if l_arg[0] == obj.__class__.__name__:
+                i += 1
+        print(i)
+
+    def default(self, arg):
+        """Override default method to handle custom commands"""
+        parts = arg.split(".")
+        if len(parts) == 2:
+            class_name = parts[0]
+            command = parts[1].strip("()")
+            if command == "all":
+                self.do_all(class_name)
+            elif command == "count":
+                self.do_count(class_name)
+            elif command.startswith("show"):
+                instance_id = command[5:-1].strip("\"")
+                self.do_show(f"{class_name} {instance_id}")
+            elif command.startswith("destroy"):
+                instance_id = command[8:-1].strip("\"")
+                self.do_destroy(f"{class_name} {instance_id}")
+            elif command.startswith("update"):
+                args = command[7:-1].split(", ", 1)
+                if len(args) == 2:
+                    instance_id = args[0].strip("\"")
+                    if args[1].startswith("{") and args[1].endswith("}"):
+                        self.do_update(f"{class_name} {instance_id} {args[1]}")
+                    else:
+                        parts_update = args[1].split(", ")
+                        if len(parts_update) == 2:
+                            attr_name = parts_update[0].strip("\"")
+                            attr_value = parts_update[1].strip("\"")
+                            self.do_update(f"{class_name} {instance_id} {attr_name} {attr_value}")
+            else:
+                print("** Unknown syntax: {}".format(arg))
+        else:
+            print("** Unknown syntax: {}".format(arg))
 
 if __name__ == '__main__':
     HBNBCommand().cmdloop()
