@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: circular, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #484848;
+}
+.container {
+  align-items: center;
+  justify-content: center;
+}
+
