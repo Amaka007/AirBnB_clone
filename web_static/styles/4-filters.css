@@ -1,0 +1,27 @@
+.filters {
+  display: flex;
+  align-items: center;
+  position: relative;
+  color: black;
+  height: 70px;
+  width: 100%;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+}
+
+.btn {
+  position: absolute;
+  right: 30px;
+  font-size: 18px;
+  background-color: #ff5a5f;
+  color: white;
+  height: 48px;
+  width: 20%;
+  border: none;
+  border-radius: 4px;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
